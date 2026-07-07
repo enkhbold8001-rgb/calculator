@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fine-Kinney Эрсдэлийн Тооцоолуур</title>
+<style>
+  :root {
+    --bg: #f2f4f7;
+    --card-bg: #ffffff;
+    --text: #1f2430;
+    --muted: #6b7280;
+    --border: #e2e5eb;
+    --accent: #2f6fed;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap {
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    color: var(--muted);
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .field {
+    margin-bottom: 18px;
+  }
+  .field:last-child { margin-bottom: 0; }
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+  label .formula-letter {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    background: #fff;
+    color: var(--text);
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .result-card {
+    text-align: center;
+    padding: 28px 20px;
+  }
+  .result-formula {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .result-score {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+  .result-badge {
+    display: inline-block;
+    padding: 8px 20px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 16px;
+    color: #fff;
+  }
+  .result-desc {
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  table.scale {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 13px;
+  }
+  table.scale caption {
+    text-align: left;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  table.scale th, table.scale td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+  }
+  table.scale th {
+    background: #f7f8fa;
+  }
+  td.swatch {
+    width: 14px;
+  }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 20px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161c;
+      --card-bg: #1d2029;
+      --text: #e8eaf0;
+      --muted: #9aa1b1;
+      --border: #2c303c;
+      --accent: #6d97ff;
+    }
+    select { background: #262a35; color: var(--text); }
+    table.scale th { background: #262a35; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Fine-Kinney аргачлалаар эрсдэлийн үнэлгээ</h1>
+  <p class="subtitle">Эрсдэлийн зэрэг = Магадлал (P) × Өртөмж (E) × Үр дагавар (C)</p>
+
+  <div class="card">
+    <div class="field">
+      <label for="prob"><span class="formula-letter">P</span> — Магадлал (Probability)</label>
+      <select id="prob"></select>
+      <div class="hint">Осол/аюул тохиолдох магадлал хэр их вэ?</div>
+    </div>
+
+    <div class="field">
+      <label for="exp"><span class="formula-letter">E</span> — Өртөмж (Exposure)</label>
+      <select id="exp"></select>
+      <div class="hint">Аюултай нөхцөлд хэр олон удаа/тогтмол өртдөг вэ?</div>
+    </div>
+
+    <div class="field">
+      <label for="cons"><span class="formula-letter">C</span> — Үр дагавар (Consequence)</label>
+      <select id="cons"></select>
+      <div class="hint">Тохиолдвол хүн, эд хөрөнгө, үйл ажиллагаанд учрах хохирлын хэмжээ</div>
+    </div>
+  </div>
+
+  <div class="card result-card">
+    <div class="result-formula" id="formulaLine">R = P × E × C</div>
+    <div class="result-score" id="scoreValue">0</div>
+    <div class="result-badge" id="riskBadge">-</div>
+    <div class="result-desc" id="riskDesc"></div>
+  </div>
+
+  <div class="card">
+    <table class="scale">
+      <caption>Эрсдэлийн зэрэглэлийн ангилал (R = P × E × C)</caption>
+      <thead>
+        <tr><th class="swatch"></th><th>Оноо (R)</th><th>Зэрэглэл</th><th>Тайлбар / арга хэмжээ</th></tr>
+      </thead>
+      <tbody id="scaleTable"></tbody>
+    </table>
+  </div>
+
+  <footer>Fine-Kinney аргачлал · Ажлын байрны эрсдэлийн үнэлгээний хэрэгсэл</footer>
+</div>
+
+<script>
+  var PROBABILITY = [
+    { v: 10,  t: "Тодорхой, гарцаагүй тохиолдоно" },
+    { v: 6,   t: "Их магадлалтай" },
+    { v: 3,   t: "Боломжтой, гэхдээ ер бусын" },
+    { v: 1,   t: "Боломжтой боловч маш ховор" },
+    { v: 0.5, t: "Төсөөлж болох ч бараг боломжгүй" },
+    { v: 0.2, t: "Бараг боломжгүй" },
+    { v: 0.1, t: "Огт боломжгүй" }
+  ];
+
+  var EXPOSURE = [
+    { v: 10,  t: "Байнга (тасралтгүй)" },
+    { v: 6,   t: "Өдөр бүр (ажлын цагт байнга)" },
+    { v: 3,   t: "Долоо хоногт нэг удаа" },
+    { v: 2,   t: "Сард нэг удаа" },
+    { v: 1,   t: "Жилд хэдхэн удаа" },
+    { v: 0.5, t: "Маш ховор тохиолддог" }
+  ];
+
+  var CONSEQUENCE = [
+    { v: 100, t: "Гамшиг — олон хүний амь нас, аж ахуйн байгууллага бүхэлдээ хохирно" },
+    { v: 40,  t: "Маш их хохирол — хэд хэдэн хүн нас бардаг" },
+    { v: 15,  t: "Маш ноцтой — нэг хүн нас барах" },
+    { v: 7,   t: "Ноцтой — хүнд гэмтэл, тахир дутуу болох" },
+    { v: 3,   t: "Анхаарал татахуйц — ажлын чадвар түр алдагдах гэмтэл" },
+    { v: 1,   t: "Бага — түр амрах шаардлагатай бага зэргийн гэмтэл" }
+  ];
+
+  var LEVELS = [
+    { min: 400, max: Infinity, label: "Маш өндөр",           color: "#c62828", desc: "Тухайн ажлыг нэн даруй зогсоож, засах арга хэмжээ авах шаардлагатай." },
+    { min: 200, max: 400,      label: "Өндөр",                color: "#ef6c00", desc: "Яаралтай анхаарал шаардлагатай, засах арга хэмжээг богино хугацаанд авах." },
+    { min: 70,  max: 200,      label: "Дунд зэрэг",           color: "#f9a825", desc: "Анхаарал хандуулж, төлөвлөгөөтэйгээр засах арга хэмжээ авах." },
+    { min: 20,  max: 70,       label: "Бага",                 color: "#7cb342", desc: "Хяналтад байлгаж, боломжтой үед сайжруулах." },
+    { min: -Infinity, max: 20, label: "Хүлээн зөвшөөрөгдөх",  color: "#2e7d32", desc: "Одоогийн нөхцөлд ажиллаж болно, тогтмол хяналт хийсээр байх." }
+  ];
+
+  function fillSelect(id, items, defaultIndex) {
+    var el = document.getElementById(id);
+    items.forEach(function (item, i) {
+      var opt = document.createElement("option");
+      opt.value = item.v;
+      opt.textContent = item.v + " — " + item.t;
+      if (i === defaultIndex) opt.selected = true;
+      el.appendChild(opt);
+    });
+  }
+
+  fillSelect("prob", PROBABILITY, 3);
+  fillSelect("exp", EXPOSURE, 2);
+  fillSelect("cons", CONSEQUENCE, 3);
+
+  function getLevel(r) {
+    for (var i = 0; i < LEVELS.length; i++) {
+      if (r >= LEVELS[i].min && r < LEVELS[i].max) return LEVELS[i];
+    }
+    return LEVELS[LEVELS.length - 1];
+  }
+
+  function formatNumber(n) {
+    return (Math.round(n * 100) / 100).toString();
+  }
+
+  function calculate() {
+    var p = parseFloat(document.getElementById("prob").value);
+    var e = parseFloat(document.getElementById("exp").value);
+    var c = parseFloat(document.getElementById("cons").value);
+    var r = p * e * c;
+    var level = getLevel(r);
+
+    document.getElementById("formulaLine").textContent =
+      "R = " + p + " × " + e + " × " + c;
+    document.getElementById("scoreValue").textContent = formatNumber(r);
+    document.getElementById("scoreValue").style.color = level.color;
+
+    var badge = document.getElementById("riskBadge");
+    badge.textContent = level.label;
+    badge.style.backgroundColor = level.color;
+
+    document.getElementById("riskDesc").textContent = level.desc;
+  }
+
+  ["prob", "exp", "cons"].forEach(function (id) {
+    document.getElementById(id).addEventListener("change", calculate);
+  });
+
+  function buildScaleTable() {
+    var tbody = document.getElementById("scaleTable");
+    var ranges = [
+      { text: "R > 400",       level: LEVELS[0] },
+      { text: "200 – 400",     level: LEVELS[1] },
+      { text: "70 – 200",      level: LEVELS[2] },
+      { text: "20 – 70",       level: LEVELS[3] },
+      { text: "R < 20",        level: LEVELS[4] }
+    ];
+    ranges.forEach(function (row) {
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="swatch" style="background:' + row.level.color + '"></td>' +
+        "<td>" + row.text + "</td>" +
+        "<td>" + row.level.label + "</td>" +
+        "<td>" + row.level.desc + "</td>";
+      tbody.appendChild(tr);
+    });
+  }
+
+  buildScaleTable();
+  calculate();
+</script>
+</body>
+</html>
