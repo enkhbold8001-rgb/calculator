@@ -126,6 +126,84 @@
     font-size: 12px;
     margin-top: 20px;
   }
+  input[type="text"], textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    background: #fff;
+    color: var(--text);
+    font-family: inherit;
+    resize: vertical;
+  }
+  textarea { min-height: 70px; }
+  .btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn:hover { opacity: 0.9; }
+  .btn-secondary {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-danger {
+    background: transparent;
+    color: #c62828;
+    border: 1px solid #c62828;
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .card-header h2 {
+    font-size: 16px;
+    margin: 0;
+  }
+  table.log {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table.log th, table.log td {
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.log th {
+    background: #f7f8fa;
+  }
+  .log-wrap {
+    overflow-x: auto;
+  }
+  .empty-msg {
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+    padding: 12px 0;
+  }
+  .risk-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
 
   @media (prefers-color-scheme: dark) {
     :root {
@@ -136,8 +214,8 @@
       --border: #2c303c;
       --accent: #6d97ff;
     }
-    select { background: #262a35; color: var(--text); }
-    table.scale th { background: #262a35; }
+    select, input[type="text"], textarea { background: #262a35; color: var(--text); }
+    table.scale th, table.log th { background: #262a35; }
   }
 </style>
 </head>
@@ -148,6 +226,11 @@
   <p class="subtitle">Эрсдэлийн зэрэг = Магадлал (P) × Өртөмж (E) × Үр дагавар (C)</p>
 
   <div class="card">
+    <div class="field">
+      <label for="taskName">Ажлын байр / үйл ажиллагааны нэр</label>
+      <input type="text" id="taskName" placeholder="Жишээ: Өндөрт өргөх ажил, зөөвөрлөлт г.м">
+    </div>
+
     <div class="field">
       <label for="prob"><span class="formula-letter">P</span> — Магадлал (Probability)</label>
       <select id="prob"></select>
@@ -165,6 +248,11 @@
       <select id="cons"></select>
       <div class="hint">Тохиолдвол хүн, эд хөрөнгө, үйл ажиллагаанд учрах хохирлын хэмжээ</div>
     </div>
+
+    <div class="field">
+      <label for="controlMeasure">Хяналтын / засах арга хэмжээ</label>
+      <textarea id="controlMeasure" placeholder="Эрсдэлийг бууруулах, арилгах арга хэмжээг бичнэ үү"></textarea>
+    </div>
   </div>
 
   <div class="card result-card">
@@ -172,6 +260,36 @@
     <div class="result-score" id="scoreValue">0</div>
     <div class="result-badge" id="riskBadge">-</div>
     <div class="result-desc" id="riskDesc"></div>
+    <div style="margin-top: 18px;">
+      <button class="btn" id="addRecordBtn">Бүртгэлд нэмэх</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Эрсдэлийн бүртгэл</h2>
+      <button class="btn btn-secondary" id="clearRecordsBtn">Бүгдийг устгах</button>
+    </div>
+    <div class="log-wrap">
+      <table class="log">
+        <thead>
+          <tr>
+            <th>№</th>
+            <th>Огноо</th>
+            <th>Ажлын нэр</th>
+            <th>P</th>
+            <th>E</th>
+            <th>C</th>
+            <th>R</th>
+            <th>Зэрэглэл</th>
+            <th>Хяналтын арга хэмжээ</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="recordsTable"></tbody>
+      </table>
+    </div>
+    <div class="empty-msg" id="emptyMsg">Одоогоор бүртгэл алга.</div>
   </div>
 
   <div class="card">
@@ -295,6 +413,92 @@
 
   buildScaleTable();
   calculate();
+
+  var STORAGE_KEY = "fineKinneyRecords";
+
+  function loadRecords() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveRecords(records) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderRecords() {
+    var records = loadRecords();
+    var tbody = document.getElementById("recordsTable");
+    var emptyMsg = document.getElementById("emptyMsg");
+    tbody.innerHTML = "";
+
+    if (records.length === 0) {
+      emptyMsg.style.display = "block";
+      return;
+    }
+    emptyMsg.style.display = "none";
+
+    records.forEach(function (rec, i) {
+      var level = getLevel(rec.r);
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>" + (i + 1) + "</td>" +
+        "<td>" + escapeHtml(rec.date) + "</td>" +
+        "<td>" + escapeHtml(rec.taskName || "-") + "</td>" +
+        "<td>" + rec.p + "</td>" +
+        "<td>" + rec.e + "</td>" +
+        "<td>" + rec.c + "</td>" +
+        "<td>" + formatNumber(rec.r) + "</td>" +
+        '<td><span class="risk-pill" style="background:' + level.color + '">' + level.label + "</span></td>" +
+        "<td>" + escapeHtml(rec.controlMeasure || "-") + "</td>" +
+        '<td><button class="btn btn-danger" data-index="' + i + '">Устгах</button></td>';
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll(".btn-danger").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var idx = parseInt(btn.getAttribute("data-index"), 10);
+        var records = loadRecords();
+        records.splice(idx, 1);
+        saveRecords(records);
+        renderRecords();
+      });
+    });
+  }
+
+  document.getElementById("addRecordBtn").addEventListener("click", function () {
+    var p = parseFloat(document.getElementById("prob").value);
+    var e = parseFloat(document.getElementById("exp").value);
+    var c = parseFloat(document.getElementById("cons").value);
+    var r = p * e * c;
+
+    var records = loadRecords();
+    records.push({
+      date: new Date().toLocaleString("mn-MN"),
+      taskName: document.getElementById("taskName").value.trim(),
+      p: p, e: e, c: c, r: r,
+      controlMeasure: document.getElementById("controlMeasure").value.trim()
+    });
+    saveRecords(records);
+    renderRecords();
+  });
+
+  document.getElementById("clearRecordsBtn").addEventListener("click", function () {
+    if (confirm("Бүх бүртгэлийг устгах уу?")) {
+      saveRecords([]);
+      renderRecords();
+    }
+  });
+
+  renderRecords();
 </script>
 </body>
 </html>
