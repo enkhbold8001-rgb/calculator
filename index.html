@@ -167,11 +167,15 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
   }
   .card-header h2 {
     font-size: 16px;
     margin: 0;
   }
+  .card-header .btn { margin-left: 8px; }
+  .card-header .btn:first-child { margin-left: 0; }
   table.log {
     width: 100%;
     border-collapse: collapse;
@@ -268,7 +272,10 @@
   <div class="card">
     <div class="card-header">
       <h2>Эрсдэлийн бүртгэл</h2>
-      <button class="btn btn-secondary" id="clearRecordsBtn">Бүгдийг устгах</button>
+      <div>
+        <button class="btn" id="exportExcelBtn">Excel татах</button>
+        <button class="btn btn-secondary" id="clearRecordsBtn">Бүгдийг устгах</button>
+      </div>
     </div>
     <div class="log-wrap">
       <table class="log">
@@ -496,6 +503,80 @@
       saveRecords([]);
       renderRecords();
     }
+  });
+
+  function excelEscape(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function buildExcelWorkbook(records) {
+    var styles = LEVELS.map(function (level, i) {
+      return '<Style ss:ID="risk' + i + '">' +
+        '<Interior ss:Color="' + level.color + '" ss:Pattern="Solid"/>' +
+        '<Font ss:Color="#FFFFFF" ss:Bold="1"/>' +
+        "</Style>";
+    }).join("");
+
+    var headerCells = ["№", "Огноо", "Ажлын нэр", "P", "E", "C", "R", "Зэрэглэл", "Хяналтын арга хэмжээ"]
+      .map(function (h) {
+        return '<Cell ss:StyleID="header"><Data ss:Type="String">' + excelEscape(h) + "</Data></Cell>";
+      }).join("");
+
+    var bodyRows = records.map(function (rec, i) {
+      var level = getLevel(rec.r);
+      var levelIndex = LEVELS.indexOf(level);
+      return "<Row>" +
+        '<Cell><Data ss:Type="Number">' + (i + 1) + "</Data></Cell>" +
+        '<Cell><Data ss:Type="String">' + excelEscape(rec.date) + "</Data></Cell>" +
+        '<Cell><Data ss:Type="String">' + excelEscape(rec.taskName || "-") + "</Data></Cell>" +
+        '<Cell><Data ss:Type="Number">' + rec.p + "</Data></Cell>" +
+        '<Cell><Data ss:Type="Number">' + rec.e + "</Data></Cell>" +
+        '<Cell><Data ss:Type="Number">' + rec.c + "</Data></Cell>" +
+        '<Cell><Data ss:Type="Number">' + rec.r + "</Data></Cell>" +
+        '<Cell ss:StyleID="risk' + levelIndex + '"><Data ss:Type="String">' + excelEscape(level.label) + "</Data></Cell>" +
+        '<Cell><Data ss:Type="String">' + excelEscape(rec.controlMeasure || "-") + "</Data></Cell>" +
+        "</Row>";
+    }).join("");
+
+    return '<?xml version="1.0" encoding="UTF-8"?>' +
+      '<?mso-application progid="Excel.Sheet"?>' +
+      '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' +
+      'xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+      'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
+      'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">' +
+      "<Styles>" +
+      '<Style ss:ID="header"><Font ss:Bold="1"/><Interior ss:Color="#E2E5EB" ss:Pattern="Solid"/></Style>' +
+      styles +
+      "</Styles>" +
+      '<Worksheet ss:Name="Эрсдэлийн бүртгэл">' +
+      '<Table>' +
+      "<Row>" + headerCells + "</Row>" +
+      bodyRows +
+      "</Table>" +
+      "</Worksheet>" +
+      "</Workbook>";
+  }
+
+  document.getElementById("exportExcelBtn").addEventListener("click", function () {
+    var records = loadRecords();
+    if (records.length === 0) {
+      alert("Бүртгэл хоосон байна. Эхлээд эрсдэл бүртгэнэ үү.");
+      return;
+    }
+    var xml = buildExcelWorkbook(records);
+    var blob = new Blob(["﻿" + xml], { type: "application/vnd.ms-excel;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    var today = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = "fine-kinney-burtgel-" + today + ".xls";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   });
 
   renderRecords();
