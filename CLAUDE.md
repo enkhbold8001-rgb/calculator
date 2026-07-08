@@ -1,33 +1,33 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Энэ файл нь Claude Code (claude.ai/code)-д энэ repository дээр ажиллахад зориулсан удирдамжийг агуулна.
 
-## Overview
+## Тойм
 
-This repo is a single-file, static web app: a **Fine-Kinney occupational risk assessment calculator** (`Эрсдэлийн зэрэг = Магадлал (P) × Өртөмж (E) × Үр дагавар (C)`). The UI copy is entirely in Mongolian. There is no backend, no build step, and no package manager — everything lives in `index.html` (HTML + inline CSS + inline vanilla JS).
+Энэ repo нь нэг файлтай, статик веб апп юм: **Fine-Kinney аргачлалаар ажлын байрны эрсдэлийн үнэлгээ тооцоолуур** (`Эрсдэлийн зэрэг = Магадлал (P) × Өртөмж (E) × Үр дагавар (C)`). UI-ийн бүх текст монгол хэл дээр байна. Backend, build алхам, package manager байхгүй — бүх зүйл `index.html` файлд байрладаг (HTML + дотор нь шингэсэн CSS + дотор нь шингэсэн vanilla JS).
 
-## Development
+## Хөгжүүлэлт
 
-There is no build/lint/test tooling in this repo. To work on it:
+Энэ repo-д build/lint/test tooling байхгүй. Ажиллахдаа:
 
-- Open `index.html` directly in a browser, or serve it locally, e.g. `python3 -m http.server` from the repo root and visit `http://localhost:8000/index.html`.
-- Verify changes manually in a browser — there is no automated test suite.
+- `index.html`-ийг шууд браузераар нээх, эсвэл локал сервертэй ажиллуулах, ж.нь repo-ийн үндсэн директораас `python3 -m http.server` ажиллуулаад `http://localhost:8000/index.html`-ыг нээх.
+- Өөрчлөлтөө браузер дээр гараар шалгах шаардлагатай — автомат тест байхгүй.
 
-## Architecture
+## Архитектур
 
-Everything is in `index.html`, structured top to bottom as:
+Бүх зүйл `index.html`-д дараах дарааллаар байрладаг:
 
-1. **Inline `<style>`** — theming via CSS custom properties on `:root`, with a `prefers-color-scheme: dark` override block. Reuse these variables (`--bg`, `--card-bg`, `--text`, `--muted`, `--border`, `--accent`) rather than hardcoding colors.
-2. **Markup** — three `.card` sections: the input form (task name, P/E/C selects, control measure textarea), the live result card, and the risk record log table, plus a static reference table of risk-level ranges.
-3. **Inline `<script>`**, in this order:
-   - **Data tables**: `PROBABILITY`, `EXPOSURE`, `CONSEQUENCE` arrays (value + Mongolian label) populate the three `<select>` dropdowns. `LEVELS` defines the five risk bands (score range, label, color, description) used both for live scoring and the reference table.
-   - **Live calculation**: `calculate()` reads the three select values, computes `R = P × E × C`, looks up the band via `getLevel(r)`, and updates the result card. Runs on `change` of any select and once on load.
-   - **Persistence**: risk records are stored in `localStorage` under key `fineKinneyRecords` via `loadRecords()`/`saveRecords()`. `renderRecords()` re-renders the log table from storage on every mutation (add/delete/clear) — there is no separate app state, storage is the source of truth.
-   - **Excel export**: `buildExcelWorkbook()` hand-builds an XML Spreadsheet (SpreadsheetML) string — not a real `.xlsx` — with per-risk-level cell coloring, downloaded as a `.xls` file via a Blob/`URL.createObjectURL`.
+1. **Дотор шингэсэн `<style>`** — `:root` дээрх CSS custom properties ашигласан theming, мөн `prefers-color-scheme: dark` override блок. Өнгийг шууд бичихийн оронд эдгээр хувьсагчийг ашиглах (`--bg`, `--card-bg`, `--text`, `--muted`, `--border`, `--accent`).
+2. **Markup** — гурван `.card` хэсэг: оролтын форм (ажлын нэр, P/E/C сонголтууд, хяналтын арга хэмжээний textarea), тухайн үеийн үр дүнгийн карт, эрсдэлийн бүртгэлийн хүснэгт, мөн эрсдэлийн зэрэглэлийн мужуудын статик лавлах хүснэгт.
+3. **Дотор шингэсэн `<script>`**, дараах дарааллаар:
+   - **Өгөгдлийн хүснэгтүүд**: `PROBABILITY`, `EXPOSURE`, `CONSEQUENCE` массивууд (утга + монгол тайлбар) гурван `<select>` dropdown-ыг дүүргэдэг. `LEVELS` нь таван эрсдэлийн зэрэглэлийг (оноогийн муж, нэр, өнгө, тайлбар) тодорхойлдог бөгөөд үүнийг тухайн үеийн тооцоолол болон лавлах хүснэгт хоёулаа ашигладаг.
+   - **Тухайн үеийн тооцоолол**: `calculate()` нь гурван select-ийн утгыг уншиж, `R = P × E × C`-г тооцоолж, `getLevel(r)`-ээр зэрэглэлийг олж, үр дүнгийн картыг шинэчилдэг. Аль ч select `change` болоход, мөн ачаалахад нэг удаа ажилладаг.
+   - **Хадгалалт**: эрсдэлийн бүртгэлүүд `loadRecords()`/`saveRecords()`-ээр дамжуулан `localStorage`-д `fineKinneyRecords` түлхүүрийн дор хадгалагддаг. `renderRecords()` нь нэмэх/устгах/бүгдийг цэвэрлэх бүр тутамд хадгалагдсан өгөгдлөөс бүртгэлийн хүснэгтийг дахин зурдаг — тусдаа app state байхгүй, storage нь цорын ганц эх сурвалж юм.
+   - **Excel export**: `buildExcelWorkbook()` нь бодит `.xlsx` биш, харин XML Spreadsheet (SpreadsheetML) стрингийг гараар үүсгэдэг бөгөөд эрсдэлийн зэрэглэл тус бүрээр нүдийг өнгөөр будаж, Blob/`URL.createObjectURL`-ээр `.xls` файл болгон татаж авдаг.
 
-## Conventions
+## Дүрэм, конвенц
 
-- Vanilla ES5-style JS (`var`, `function` expressions) — no modules, no framework, no build step. Match this style rather than introducing modern syntax that would need transpilation.
-- All user-facing strings are Mongolian; keep new UI text consistent with the existing tone/terminology (e.g. "Эрсдэл" = risk, "Магадлал" = probability, "Өртөмж" = exposure, "Үр дагавар" = consequence).
-- When adding a field to a risk record, update it in three places together: the form input, the object pushed in the `addRecordBtn` handler, and both `renderRecords()` (HTML table) and `buildExcelWorkbook()` (Excel export) so the log view and export stay in sync.
-- User-supplied text rendered into the DOM (task name, control measure) must go through `escapeHtml()`; text written into the Excel XML must go through `excelEscape()`. Do not bypass these when adding new fields.
+- Vanilla ES5 хэлбэрийн JS (`var`, `function` expression) — модуль, framework, build алхам байхгүй. Transpile хийх шаардлагатай орчин үеийн синтакс оруулахын оронд энэ хэв маягийг баримтлах.
+- Хэрэглэгчид харагдах бүх текст монгол хэл дээр байна; шинэ UI текстийг одоо байгаа өнгө аяс/нэр томьёотой уялдуулах (ж.нь "Эрсдэл" = risk, "Магадлал" = probability, "Өртөмж" = exposure, "Үр дагавар" = consequence).
+- Эрсдэлийн бүртгэлд шинэ талбар нэмэхдээ дараах гурван газарт хамт шинэчлэх: форм дахь input, `addRecordBtn` handler дотор push хийгддэг object, мөн `renderRecords()` (HTML хүснэгт) болон `buildExcelWorkbook()` (Excel export) хоёуланг нь, ингэснээр бүртгэлийн харагдац болон export хоёр хоорондоо нийцтэй байна.
+- DOM-д харагддаг хэрэглэгчийн оруулсан текст (ажлын нэр, хяналтын арга хэмжээ) `escapeHtml()`-ээр дамжих ёстой; Excel XML-д бичигдэх текст `excelEscape()`-ээр дамжих ёстой. Шинэ талбар нэмэхдээ эдгээрийг алгасаж болохгүй.
