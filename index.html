@@ -199,6 +199,12 @@
     text-align: center;
     padding: 12px 0;
   }
+  .error-hint {
+    color: #c62828;
+  }
+  input.input-error {
+    border-color: #c62828;
+  }
   .risk-pill {
     display: inline-block;
     padding: 3px 10px;
@@ -233,6 +239,7 @@
     <div class="field">
       <label for="taskName">Ажлын байр / үйл ажиллагааны нэр</label>
       <input type="text" id="taskName" placeholder="Жишээ: Өндөрт өргөх ажил, зөөвөрлөлт г.м">
+      <div class="hint error-hint" id="taskNameError" style="display: none;">Ажлын байр / үйл ажиллагааны нэрийг заавал бөглөнө үү.</div>
     </div>
 
     <div class="field">
@@ -481,7 +488,22 @@
     });
   }
 
+  document.getElementById("taskName").addEventListener("input", function () {
+    this.classList.remove("input-error");
+    document.getElementById("taskNameError").style.display = "none";
+  });
+
   document.getElementById("addRecordBtn").addEventListener("click", function () {
+    var taskNameInput = document.getElementById("taskName");
+    var taskName = taskNameInput.value.trim();
+
+    if (!taskName) {
+      taskNameInput.classList.add("input-error");
+      document.getElementById("taskNameError").style.display = "block";
+      taskNameInput.focus();
+      return;
+    }
+
     var p = parseFloat(document.getElementById("prob").value);
     var e = parseFloat(document.getElementById("exp").value);
     var c = parseFloat(document.getElementById("cons").value);
@@ -490,7 +512,7 @@
     var records = loadRecords();
     records.push({
       date: new Date().toLocaleString("mn-MN"),
-      taskName: document.getElementById("taskName").value.trim(),
+      taskName: taskName,
       p: p, e: e, c: c, r: r,
       controlMeasure: document.getElementById("controlMeasure").value.trim()
     });
